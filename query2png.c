@@ -23,8 +23,8 @@
 #include <stdint.h>
 #include <string.h>
 #include <math.h>
-/* Archivo de cabecera que contiene las definiciones de las macros, las constantes, las declaraciones de funciones de la biblioteca libpq-fe. libpq is the PostgreSQL's official C application interface. */
 #include <libpq-fe.h>
+/* Archivo de cabecera que contiene las definiciones de las macros, las constantes, las declaraciones de funciones de la biblioteca libpq-fe. libpq is the PostgreSQL's official C application interface. */
 
 /* Se define la estructura pixel_t en la cual se declaran los colores: rojo, verde y azul con un ancho definido de 8 bits. ( 8-bit unsigned type )*/
 typedef struct
@@ -104,7 +104,8 @@ main (int argc, char *argv[])
 		alpha = 0.2;
  
  
-  char *quer, 
+  char *quer, *querie,
+      // *A,
     *rojo,
     *verde,
     *azul, 
@@ -128,7 +129,7 @@ main (int argc, char *argv[])
 /*  *user = "postgres", */
 	*database;
 
-  bitmap_t fruit;
+  bitmap_t wattie;
 
   while ((argc > 1) && (argv[1][0] == '-'))
     {
@@ -137,9 +138,11 @@ main (int argc, char *argv[])
 	{
   	  /* Query */
 	case 'q':	
-	  quer = &argv[1][2];
-	  quer = str_replace(quer,"\\","");
-	  quer = str_replace(quer,"\"","");
+	  querie = &argv[1][2];
+	
+
+	  quer =  str_replace(querie,"\"","");
+//	  quer = str_replace(querie,"\\","");
 	  break;
 	  /* ip */
 	case 'i':
@@ -235,6 +238,8 @@ main (int argc, char *argv[])
       --argc;
     }
 
+	
+	
   PGconn *conn;
   PGresult *res;  
   conn = PQsetdbLogin (ip, port, NULL, NULL, database, user, password);	/* Con esta sentencia se establece la conexión (GENERAL) */
@@ -245,22 +250,17 @@ main (int argc, char *argv[])
   else
     {
       res = PQexec (conn, quer);
-
+      free (quer);
       if (res != NULL && PGRES_TUPLES_OK == PQresultStatus (res))
 	{
-	  /* Dibuja de color el cuadrito */
 	  larg = atoi (largo);
 	  anch = atoi (ancho);
-	  fruit.width = anch;
-	  fruit.height = larg;
+	  wattie.width = anch;
+	  wattie.height = larg;
 
-	  fruit.pixels =
-	    calloc (sizeof (pixel_t), fruit.width * fruit.height);
-	 
-	  /* Termina de dibujar el cuadrito */
+	 wattie.pixels = calloc (sizeof (pixel_t), wattie.width * wattie.height);
 
 	 satur = atoi (satura); 
-	  /* Dibuja los puntos */
 	   x_m = atof (x_min);
 	   y_m = atof (y_min);
 	   X_m = atof (X_max);
@@ -268,19 +268,20 @@ main (int argc, char *argv[])
 	   r = atoi (rojo);
 	   g = atoi (verde);
 	   b = atoi (azul);
+
 	   if(satur == 1){
-		r2 = atoi (rojo2);
+	         r2 = atoi (rojo2);
 		 g2 = atoi (verde2);
 		 b2 = atoi (azul2); 
 		
-  		
+		 hits =  calloc (sizeof (int), wattie.width * wattie.height);
+		 int o;
 
-		hits =  calloc (sizeof (int), fruit.width * fruit.height);
-		int o;
-		for(o = 0; o<fruit.width * fruit.height;o++){
+		 for(o = 0; o<wattie.width * wattie.height;o++){
 			hits[o] = 0;
 		}
 	   }
+
 	  for (p = PQntuples (res) - 1; p >= 0; p--)
 	    {
 
@@ -303,52 +304,52 @@ main (int argc, char *argv[])
 	 
 	      switch(satur){
 			case 0:
-		  fruit.pixels[larg*j+i].red = r;	
-		  fruit.pixels[larg*j+i].green = g;	
-		  fruit.pixels[larg*j+i].blue = b;	
+		  wattie.pixels[larg*j+i].red = r;	
+		  wattie.pixels[larg*j+i].green = g;	
+		  wattie.pixels[larg*j+i].blue = b;	
 
  		  for (k = 0; k<radio; k++){
 			for(k2 = 0; k2<=k; k2++){
-			if(k!=radio-1 || k2!=radio-1){
-			if(larg*(j+k)+(i+k2) < larg*anch){
-			fruit.pixels[larg*(j+k)+(i+k2)].red = r;	
-			fruit.pixels[larg*(j+k)+(i+k2)].green = g;	
-			fruit.pixels[larg*(j+k)+(i+k2)].blue = b;	
+				if(k!=radio-1 || k2!=radio-1){
+					if(larg*(j+k)+(i+k2) < larg*anch){
+						wattie.pixels[larg*(j+k)+(i+k2)].red = r;	
+						wattie.pixels[larg*(j+k)+(i+k2)].green = g;	
+						wattie.pixels[larg*(j+k)+(i+k2)].blue = b;	
 			}
-			if(larg*(j+k2)+(i+k) < larg*anch){
-			fruit.pixels[larg*(j+k2)+(i+k)].red = r;	
-			fruit.pixels[larg*(j+k2)+(i+k)].green = g;	
-			fruit.pixels[larg*(j+k2)+(i+k)].blue = b;	
+		  			if(larg*(j+k2)+(i+k) < larg*anch){
+						wattie.pixels[larg*(j+k2)+(i+k)].red = r;	
+						wattie.pixels[larg*(j+k2)+(i+k)].green = g;	
+						wattie.pixels[larg*(j+k2)+(i+k)].blue = b;	
 			}
-			if((larg*(j-k)+(i-k2) < larg*anch)&&(larg*(j-k)+(i-k2) >= 0)){
-			fruit.pixels[larg*(j-k)+(i-k2)].red = r;	
-			fruit.pixels[larg*(j-k)+(i-k2)].green = g;	
-			fruit.pixels[larg*(j-k)+(i-k2)].blue = b;	
+					if((larg*(j-k)+(i-k2) < larg*anch)&&(larg*(j-k)+(i-k2) >= 0)){
+						wattie.pixels[larg*(j-k)+(i-k2)].red = r;	
+						wattie.pixels[larg*(j-k)+(i-k2)].green = g;	
+						wattie.pixels[larg*(j-k)+(i-k2)].blue = b;	
 			}
-			if((larg*(j-k2)+(i-k) < larg*anch)&&(larg*(j-k2)+(i-k) >= 0)){
-			fruit.pixels[larg*(j-k2)+(i-k)].red = r;	
-			fruit.pixels[larg*(j-k2)+(i-k)].green = g;	
-			fruit.pixels[larg*(j-k2)+(i-k)].blue = b;	
+					if((larg*(j-k2)+(i-k) < larg*anch)&&(larg*(j-k2)+(i-k) >= 0)){
+						wattie.pixels[larg*(j-k2)+(i-k)].red = r;	
+						wattie.pixels[larg*(j-k2)+(i-k)].green = g;	
+						wattie.pixels[larg*(j-k2)+(i-k)].blue = b;	
 			}
-			if((larg*(j+k)+(i-k2) < larg*anch)&&(larg*(j+k)+(i-k2) >= 0)){
-			fruit.pixels[larg*(j+k)+(i-k2)].red = r;	
-			fruit.pixels[larg*(j+k)+(i-k2)].green = g;	
-			fruit.pixels[larg*(j+k)+(i-k2)].blue = b;	
+					if((larg*(j+k)+(i-k2) < larg*anch)&&(larg*(j+k)+(i-k2) >= 0)){
+						wattie.pixels[larg*(j+k)+(i-k2)].red = r;	
+						wattie.pixels[larg*(j+k)+(i-k2)].green = g;	
+						wattie.pixels[larg*(j+k)+(i-k2)].blue = b;	
 			}
-			if((larg*(j-k2)+(i+k) < larg*anch)&&(larg*(j-k2)+(i+k) >= 0)){
-			fruit.pixels[larg*(j-k2)+(i+k)].red = r;
-			fruit.pixels[larg*(j-k2)+(i+k)].green = g;	
-			fruit.pixels[larg*(j-k2)+(i+k)].blue = b;	
+					if((larg*(j-k2)+(i+k) < larg*anch)&&(larg*(j-k2)+(i+k) >= 0)){
+						wattie.pixels[larg*(j-k2)+(i+k)].red = r;
+						wattie.pixels[larg*(j-k2)+(i+k)].green = g;	
+						wattie.pixels[larg*(j-k2)+(i+k)].blue = b;	
 			}
-			if((larg*(j-k)+(i+k2) < larg*anch)&&(larg*(j-k)+(i+k2) >= 0)){
-			fruit.pixels[larg*(j-k)+(i+k2)].red = r;
-			fruit.pixels[larg*(j-k)+(i+k2)].green = g;
-			fruit.pixels[larg*(j-k)+(i+k2)].blue = b;	
+					if((larg*(j-k)+(i+k2) < larg*anch)&&(larg*(j-k)+(i+k2) >= 0)){
+						wattie.pixels[larg*(j-k)+(i+k2)].red = r;
+						wattie.pixels[larg*(j-k)+(i+k2)].green = g;
+						wattie.pixels[larg*(j-k)+(i+k2)].blue = b;	
 			}
-			if((larg*(j+k2)+(i-k) < larg*anch)&&(larg*(j+k2)+(i-k) >= 0)){
-			fruit.pixels[larg*(j+k2)+(i-k)].red = r;	
-			fruit.pixels[larg*(j+k2)+(i-k)].green = g;
-			fruit.pixels[larg*(j+k2)+(i-k)].blue = b;	
+					if((larg*(j+k2)+(i-k) < larg*anch)&&(larg*(j+k2)+(i-k) >= 0)){
+						wattie.pixels[larg*(j+k2)+(i-k)].red = r;	
+						wattie.pixels[larg*(j+k2)+(i-k)].green = g;
+						wattie.pixels[larg*(j+k2)+(i-k)].blue = b;	
 			}
 			}
 			}
@@ -361,333 +362,269 @@ main (int argc, char *argv[])
 	
 			hits[larg*j+i]++; 
 		
-			fruit.pixels[larg*j+i].red = round(r*(exp(-alpha*(double)hits[larg*j+i]))+r2*(1-exp(-alpha*(double)hits[larg*j+i])));
-			fruit.pixels[larg*j+i].green = round(g*(exp(-alpha*(double)hits[larg*j+i]))+g2*(1-exp(-alpha*(double)hits[larg*j+i])));
-			fruit.pixels[larg*j+i].blue = round(b*(exp(-alpha*(double)hits[larg*j+i]))+b2*(1-exp(-alpha*(double)hits[larg*j+i])));
+			wattie.pixels[larg*j+i].red = round(r*(exp(-alpha*(double)hits[larg*j+i]))+r2*(1-exp(-alpha*(double)hits[larg*j+i])));
+			wattie.pixels[larg*j+i].green = round(g*(exp(-alpha*(double)hits[larg*j+i]))+g2*(1-exp(-alpha*(double)hits[larg*j+i])));
+			wattie.pixels[larg*j+i].blue = round(b*(exp(-alpha*(double)hits[larg*j+i]))+b2*(1-exp(-alpha*(double)hits[larg*j+i])));
 
 	}
 
-if (radio == 2){
+	if (radio == 2){
+	  	/* Inicia radio 1 (centro del círculo) */
+			hits[larg*j+i]++;
 
-			hits[larg*j+i]++; 
-			fruit.pixels[larg*j+i].red = round(r*(exp(-alpha*(double)hits[larg*j+i]))+r2*(1-exp(-alpha*(double)hits[larg*j+i])));
-			fruit.pixels[larg*j+i].green = round(g*(exp(-alpha*(double)hits[larg*j+i]))+g2*(1-exp(-alpha*(double)hits[larg*j+i])));
-			fruit.pixels[larg*j+i].blue = round(b*(exp(-alpha*(double)hits[larg*j+i]))+b2*(1-exp(-alpha*(double)hits[larg*j+i])));
-	  	
-		
+			wattie.pixels[larg*j+i].red = round(r*(exp(-alpha*(double)hits[larg*j+i]))+r2*(1-exp(-alpha*(double)hits[larg*j+i])));
+			wattie.pixels[larg*j+i].green = round(g*(exp(-alpha*(double)hits[larg*j+i]))+g2*(1-exp(-alpha*(double)hits[larg*j+i])));
+			wattie.pixels[larg*j+i].blue = round(b*(exp(-alpha*(double)hits[larg*j+i]))+b2*(1-exp(-alpha*(double)hits[larg*j+i])));
+	  	/* Termina radio 1 (centro del círculo) */
+
+			/* Inicia radio 2 */
 			hits[larg*j+i+1]++; 
-			fruit.pixels[larg*j+i+1].red = round(r*(exp(-alpha*(double)hits[larg*j+i+1]))+r2*(1-exp(-alpha*(double)hits[larg*j+i+1])));
-			fruit.pixels[larg*j+i+1].green = round(g*(exp(-alpha*(double)hits[larg*j+i+1]))+g2*(1-exp(-alpha*(double)hits[larg*j+i+1])));
-			fruit.pixels[larg*j+i+1].blue = round(b*(exp(-alpha*(double)hits[larg*j+i+1]))+b2*(1-exp(-alpha*(double)hits[larg*j+i+1])));
+
+			wattie.pixels[larg*j+i+1].red = round(r*(exp(-alpha*(double)hits[larg*j+i+1]))+r2*(1-exp(-alpha*(double)hits[larg*j+i+1])));
+			wattie.pixels[larg*j+i+1].green = round(g*(exp(-alpha*(double)hits[larg*j+i+1]))+g2*(1-exp(-alpha*(double)hits[larg*j+i+1])));
+			wattie.pixels[larg*j+i+1].blue = round(b*(exp(-alpha*(double)hits[larg*j+i+1]))+b2*(1-exp(-alpha*(double)hits[larg*j+i+1])));
 
   
 	  		hits[larg*j+i-1]++; 
-			fruit.pixels[larg*j+i-1].red = round(r*(exp(-alpha*(double)hits[larg*j+i-1]))+r2*(1-exp(-alpha*(double)hits[larg*j+i-1])));
-			fruit.pixels[larg*j+i-1].green = round(g*(exp(-alpha*(double)hits[larg*j+i-1]))+g2*(1-exp(-alpha*(double)hits[larg*j+i-1])));
-			fruit.pixels[larg*j+i-1].blue = round(b*(exp(-alpha*(double)hits[larg*j+i-1]))+b2*(1-exp(-alpha*(double)hits[larg*j+i-1])));
+
+			wattie.pixels[larg*j+i-1].red = round(r*(exp(-alpha*(double)hits[larg*j+i-1]))+r2*(1-exp(-alpha*(double)hits[larg*j+i-1])));
+			wattie.pixels[larg*j+i-1].green = round(g*(exp(-alpha*(double)hits[larg*j+i-1]))+g2*(1-exp(-alpha*(double)hits[larg*j+i-1])));
+			wattie.pixels[larg*j+i-1].blue = round(b*(exp(-alpha*(double)hits[larg*j+i-1]))+b2*(1-exp(-alpha*(double)hits[larg*j+i-1])));
   
 
 	  		hits[larg*(j+1)+i]++; 
-			fruit.pixels[larg*(j+1)+i].red = round(r*(exp(-alpha*(double)hits[larg*(j+1)+i]))+r2*(1-exp(-alpha*(double)hits[larg*(j+1)+i])));
-			fruit.pixels[larg*(j+1)+i].green = round(g*(exp(-alpha*(double)hits[larg*(j+1)+i]))+g2*(1-exp(-alpha*(double)hits[larg*(j+1)+i])));
-			fruit.pixels[larg*(j+1)+i].blue = round(b*(exp(-alpha*(double)hits[larg*(j+1)+i]))+b2*(1-exp(-alpha*(double)hits[larg*(j+1)+i])));
+
+			wattie.pixels[larg*(j+1)+i].red = round(r*(exp(-alpha*(double)hits[larg*(j+1)+i]))+r2*(1-exp(-alpha*(double)hits[larg*(j+1)+i])));
+			wattie.pixels[larg*(j+1)+i].green = round(g*(exp(-alpha*(double)hits[larg*(j+1)+i]))+g2*(1-exp(-alpha*(double)hits[larg*(j+1)+i])));
+			wattie.pixels[larg*(j+1)+i].blue = round(b*(exp(-alpha*(double)hits[larg*(j+1)+i]))+b2*(1-exp(-alpha*(double)hits[larg*(j+1)+i])));
 
 
 	  		hits[larg*(j-1)+i]++; 
-			fruit.pixels[larg*(j-1)+i].red = round(r*(exp(-alpha*(double)hits[larg*(j-1)+i]))+r2*(1-exp(-alpha*(double)hits[larg*(j-1)+i])));
-			fruit.pixels[larg*(j-1)+i].green = round(g*(exp(-alpha*(double)hits[larg*(j-1)+i]))+g2*(1-exp(-alpha*(double)hits[larg*(j-1)+i])));
-			fruit.pixels[larg*(j-1)+i].blue = round(b*(exp(-alpha*(double)hits[larg*(j-1)+i]))+b2*(1-exp(-alpha*(double)hits[larg*(j-1)+i])));
+
+			wattie.pixels[larg*(j-1)+i].red = round(r*(exp(-alpha*(double)hits[larg*(j-1)+i]))+r2*(1-exp(-alpha*(double)hits[larg*(j-1)+i])));
+			wattie.pixels[larg*(j-1)+i].green = round(g*(exp(-alpha*(double)hits[larg*(j-1)+i]))+g2*(1-exp(-alpha*(double)hits[larg*(j-1)+i])));
+			wattie.pixels[larg*(j-1)+i].blue = round(b*(exp(-alpha*(double)hits[larg*(j-1)+i]))+b2*(1-exp(-alpha*(double)hits[larg*(j-1)+i])));
 }
 
-if (radio == 3 ){
-if(larg*j+i < larg*anch){
+/* Termina radio 2 */
 
+	if (radio == 3 ){
+	  /* Inicia radio 1 (centro)*/
+		if(larg*j+i < larg*anch){
 
 			hits[larg*j+i]++; 
-			fruit.pixels[larg*j+i].red = round(r*(exp(-alpha*(double)hits[larg*j+i]))+r2*(1-exp(-alpha*(double)hits[larg*j+i])));
-			fruit.pixels[larg*j+i].green = round(g*(exp(-alpha*(double)hits[larg*j+i]))+g2*(1-exp(-alpha*(double)hits[larg*j+i])));
-			fruit.pixels[larg*j+i].blue = round(b*(exp(-alpha*(double)hits[larg*j+i]))+b2*(1-exp(-alpha*(double)hits[larg*j+i])));
+
+			wattie.pixels[larg*j+i].red = round(r*(exp(-alpha*(double)hits[larg*j+i]))+r2*(1-exp(-alpha*(double)hits[larg*j+i])));
+			wattie.pixels[larg*j+i].green = round(g*(exp(-alpha*(double)hits[larg*j+i]))+g2*(1-exp(-alpha*(double)hits[larg*j+i])));
+			wattie.pixels[larg*j+i].blue = round(b*(exp(-alpha*(double)hits[larg*j+i]))+b2*(1-exp(-alpha*(double)hits[larg*j+i])));
 }
-		
-if(larg*j+i+1 < larg*anch){
+/* Termina radio 1 (centro) */		
+
+/* Inicia radio 2 */
+		if(larg*j+i+1 < larg*anch){
+
 			hits[larg*j+i+1]++; 
-			fruit.pixels[larg*j+i+1].red = round(r*(exp(-alpha*(double)hits[larg*j+i+1]))+r2*(1-exp(-alpha*(double)hits[larg*j+i+1])));
-			fruit.pixels[larg*j+i+1].green = round(g*(exp(-alpha*(double)hits[larg*j+i+1]))+g2*(1-exp(-alpha*(double)hits[larg*j+i+1])));
-			fruit.pixels[larg*j+i+1].blue = round(b*(exp(-alpha*(double)hits[larg*j+i+1]))+b2*(1-exp(-alpha*(double)hits[larg*j+i+1])));
+
+			wattie.pixels[larg*j+i+1].red = round(r*(exp(-alpha*(double)hits[larg*j+i+1]))+r2*(1-exp(-alpha*(double)hits[larg*j+i+1])));
+			wattie.pixels[larg*j+i+1].green = round(g*(exp(-alpha*(double)hits[larg*j+i+1]))+g2*(1-exp(-alpha*(double)hits[larg*j+i+1])));
+			wattie.pixels[larg*j+i+1].blue = round(b*(exp(-alpha*(double)hits[larg*j+i+1]))+b2*(1-exp(-alpha*(double)hits[larg*j+i+1])));
 }  
-if(larg*j+i-1 < larg*anch){
+		if(larg*j+i-1 < larg*anch){
+
 	  		hits[larg*j+i-1]++; 
-			fruit.pixels[larg*j+i-1].red = round(r*(exp(-alpha*(double)hits[larg*j+i-1]))+r2*(1-exp(-alpha*(double)hits[larg*j+i-1])));
-			fruit.pixels[larg*j+i-1].green = round(g*(exp(-alpha*(double)hits[larg*j+i-1]))+g2*(1-exp(-alpha*(double)hits[larg*j+i-1])));
-			fruit.pixels[larg*j+i-1].blue = round(b*(exp(-alpha*(double)hits[larg*j+i-1]))+b2*(1-exp(-alpha*(double)hits[larg*j+i-1])));
+
+			wattie.pixels[larg*j+i-1].red = round(r*(exp(-alpha*(double)hits[larg*j+i-1]))+r2*(1-exp(-alpha*(double)hits[larg*j+i-1])));
+			wattie.pixels[larg*j+i-1].green = round(g*(exp(-alpha*(double)hits[larg*j+i-1]))+g2*(1-exp(-alpha*(double)hits[larg*j+i-1])));
+			wattie.pixels[larg*j+i-1].blue = round(b*(exp(-alpha*(double)hits[larg*j+i-1]))+b2*(1-exp(-alpha*(double)hits[larg*j+i-1])));
 } 
-if(larg*(j+1)+i < larg*anch){
+		if(larg*(j+1)+i < larg*anch){
 
-	  		hits[larg*(j+1)+i]++; 
-			fruit.pixels[larg*(j+1)+i].red = round(r*(exp(-alpha*(double)hits[larg*(j+1)+i]))+r2*(1-exp(-alpha*(double)hits[larg*(j+1)+i])));
-			fruit.pixels[larg*(j+1)+i].green = round(g*(exp(-alpha*(double)hits[larg*(j+1)+i]))+g2*(1-exp(-alpha*(double)hits[larg*(j+1)+i])));
-			fruit.pixels[larg*(j+1)+i].blue = round(b*(exp(-alpha*(double)hits[larg*(j+1)+i]))+b2*(1-exp(-alpha*(double)hits[larg*(j+1)+i])));
+	  		hits[larg*(j+1)+i]++;
+
+			wattie.pixels[larg*(j+1)+i].red = round(r*(exp(-alpha*(double)hits[larg*(j+1)+i]))+r2*(1-exp(-alpha*(double)hits[larg*(j+1)+i])));
+			wattie.pixels[larg*(j+1)+i].green = round(g*(exp(-alpha*(double)hits[larg*(j+1)+i]))+g2*(1-exp(-alpha*(double)hits[larg*(j+1)+i])));
+			wattie.pixels[larg*(j+1)+i].blue = round(b*(exp(-alpha*(double)hits[larg*(j+1)+i]))+b2*(1-exp(-alpha*(double)hits[larg*(j+1)+i])));
 }
-if(larg*(j-1)+i < larg*anch){
+		if(larg*(j-1)+i < larg*anch){
+
 	  		hits[larg*(j-1)+i]++; 
-			fruit.pixels[larg*(j-1)+i].red = round(r*(exp(-alpha*(double)hits[larg*(j-1)+i]))+r2*(1-exp(-alpha*(double)hits[larg*(j-1)+i])));
-			fruit.pixels[larg*(j-1)+i].green = round(g*(exp(-alpha*(double)hits[larg*(j-1)+i]))+g2*(1-exp(-alpha*(double)hits[larg*(j-1)+i])));
-			fruit.pixels[larg*(j-1)+i].blue = round(b*(exp(-alpha*(double)hits[larg*(j-1)+i]))+b2*(1-exp(-alpha*(double)hits[larg*(j-1)+i])));
+
+			wattie.pixels[larg*(j-1)+i].red = round(r*(exp(-alpha*(double)hits[larg*(j-1)+i]))+r2*(1-exp(-alpha*(double)hits[larg*(j-1)+i])));
+			wattie.pixels[larg*(j-1)+i].green = round(g*(exp(-alpha*(double)hits[larg*(j-1)+i]))+g2*(1-exp(-alpha*(double)hits[larg*(j-1)+i])));
+			wattie.pixels[larg*(j-1)+i].blue = round(b*(exp(-alpha*(double)hits[larg*(j-1)+i]))+b2*(1-exp(-alpha*(double)hits[larg*(j-1)+i])));
 }
-if(larg*(j+2)+i < larg*anch){
 
+/* Termina radio 2 */
 
+/* Inicia radio 3 */
+
+		if(larg*(j+2)+i < larg*anch){
 
 	  		hits[larg*(j+2)+i]++; 
-			fruit.pixels[larg*(j+2)+i].red = round(r*(exp(-alpha*(double)hits[larg*(j+2)+i]))+r2*(1-exp(-alpha*(double)hits[larg*(j+2)+i])));
-			fruit.pixels[larg*(j+2)+i].green = round(g*(exp(-alpha*(double)hits[larg*(j+2)+i]))+g2*(1-exp(-alpha*(double)hits[larg*(j+2)+i])));
-			fruit.pixels[larg*(j+2)+i].blue = round(b*(exp(-alpha*(double)hits[larg*(j+2)+i]))+b2*(1-exp(-alpha*(double)hits[larg*(j+2)+i])));
+
+			wattie.pixels[larg*(j+2)+i].red = round(r*(exp(-alpha*(double)hits[larg*(j+2)+i]))+r2*(1-exp(-alpha*(double)hits[larg*(j+2)+i])));
+			wattie.pixels[larg*(j+2)+i].green = round(g*(exp(-alpha*(double)hits[larg*(j+2)+i]))+g2*(1-exp(-alpha*(double)hits[larg*(j+2)+i])));
+			wattie.pixels[larg*(j+2)+i].blue = round(b*(exp(-alpha*(double)hits[larg*(j+2)+i]))+b2*(1-exp(-alpha*(double)hits[larg*(j+2)+i])));
 }
-if(larg*(j-2)+i < larg*anch && larg*(j-2)+i>=0){
+		if(larg*(j-2)+i < larg*anch && larg*(j-2)+i>=0){
+
 	  		hits[larg*(j-2)+i]++; 
-			fruit.pixels[larg*(j-2)+i].red = round(r*(exp(-alpha*(double)hits[larg*(j-2)+i]))+r2*(1-exp(-alpha*(double)hits[larg*(j-2)+i])));
-			fruit.pixels[larg*(j-2)+i].green = round(g*(exp(-alpha*(double)hits[larg*(j-2)+i]))+g2*(1-exp(-alpha*(double)hits[larg*(j-2)+i])));
-			fruit.pixels[larg*(j-2)+i].blue = round(b*(exp(-alpha*(double)hits[larg*(j-2)+i]))+b2*(1-exp(-alpha*(double)hits[larg*(j-2)+i])));
+
+			wattie.pixels[larg*(j-2)+i].red = round(r*(exp(-alpha*(double)hits[larg*(j-2)+i]))+r2*(1-exp(-alpha*(double)hits[larg*(j-2)+i])));
+			wattie.pixels[larg*(j-2)+i].green = round(g*(exp(-alpha*(double)hits[larg*(j-2)+i]))+g2*(1-exp(-alpha*(double)hits[larg*(j-2)+i])));
+			wattie.pixels[larg*(j-2)+i].blue = round(b*(exp(-alpha*(double)hits[larg*(j-2)+i]))+b2*(1-exp(-alpha*(double)hits[larg*(j-2)+i])));
 }
-if(larg*j+i+2 < larg*anch && larg*j+i+2 >=0){
+		if(larg*j+i+2 < larg*anch && larg*j+i+2 >=0){
 
 			hits[larg*j+i+2]++; 
-			fruit.pixels[larg*j+i+2].red = round(r*(exp(-alpha*(double)hits[larg*j+i+2]))+r2*(1-exp(-alpha*(double)hits[larg*j+i+2])));
-			fruit.pixels[larg*j+i+2].green = round(g*(exp(-alpha*(double)hits[larg*j+i+2]))+g2*(1-exp(-alpha*(double)hits[larg*j+i+2])));
-			fruit.pixels[larg*j+i+2].blue = round(b*(exp(-alpha*(double)hits[larg*j+i+2]))+b2*(1-exp(-alpha*(double)hits[larg*j+i+2])));
+
+			wattie.pixels[larg*j+i+2].red = round(r*(exp(-alpha*(double)hits[larg*j+i+2]))+r2*(1-exp(-alpha*(double)hits[larg*j+i+2])));
+			wattie.pixels[larg*j+i+2].green = round(g*(exp(-alpha*(double)hits[larg*j+i+2]))+g2*(1-exp(-alpha*(double)hits[larg*j+i+2])));
+			wattie.pixels[larg*j+i+2].blue = round(b*(exp(-alpha*(double)hits[larg*j+i+2]))+b2*(1-exp(-alpha*(double)hits[larg*j+i+2])));
 } 
-if(larg*j+i-2 < larg*anch && larg*j+i-2 >=0){
+		if(larg*j+i-2 < larg*anch && larg*j+i-2 >=0){
+
 	  		hits[larg*j+i-2]++; 
-			fruit.pixels[larg*j+i-2].red = round(r*(exp(-alpha*(double)hits[larg*j+i-2]))+r2*(1-exp(-alpha*(double)hits[larg*j+i-2])));
-			fruit.pixels[larg*j+i-2].green = round(g*(exp(-alpha*(double)hits[larg*j+i-2]))+g2*(1-exp(-alpha*(double)hits[larg*j+i-2])));
-			fruit.pixels[larg*j+i-2].blue = round(b*(exp(-alpha*(double)hits[larg*j+i-2]))+b2*(1-exp(-alpha*(double)hits[larg*j+i-2])));
+
+			wattie.pixels[larg*j+i-2].red = round(r*(exp(-alpha*(double)hits[larg*j+i-2]))+r2*(1-exp(-alpha*(double)hits[larg*j+i-2])));
+			wattie.pixels[larg*j+i-2].green = round(g*(exp(-alpha*(double)hits[larg*j+i-2]))+g2*(1-exp(-alpha*(double)hits[larg*j+i-2])));
+			wattie.pixels[larg*j+i-2].blue = round(b*(exp(-alpha*(double)hits[larg*j+i-2]))+b2*(1-exp(-alpha*(double)hits[larg*j+i-2])));
 }
 
+		if(larg*(j+1)+i+1 < larg*anch && larg*(j+1)+i+1 >=0){
 
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-
-
-
-
-
-if(larg*(j+1)+i+1 < larg*anch && larg*(j+1)+i+1 >=0){
 	  		hits[larg*(j+1)+i+1]++; 
-			fruit.pixels[larg*(j+1)+i+1].red = round(r*(exp(-alpha*(double)hits[larg*(j+1)+i+1]))+r2*(1-exp(-alpha*(double)hits[larg*(j+1)+i+1])));
-			fruit.pixels[larg*(j+1)+i+1].green = round(g*(exp(-alpha*(double)hits[larg*(j+1)+i+1]))+g2*(1-exp(-alpha*(double)hits[larg*(j+1)+i+1])));
-			fruit.pixels[larg*(j+1)+i+1].blue = round(b*(exp(-alpha*(double)hits[larg*(j+1)+i+1]))+b2*(1-exp(-alpha*(double)hits[larg*(j+1)+i+1])));
+
+			wattie.pixels[larg*(j+1)+i+1].red = round(r*(exp(-alpha*(double)hits[larg*(j+1)+i+1]))+r2*(1-exp(-alpha*(double)hits[larg*(j+1)+i+1])));
+			wattie.pixels[larg*(j+1)+i+1].green = round(g*(exp(-alpha*(double)hits[larg*(j+1)+i+1]))+g2*(1-exp(-alpha*(double)hits[larg*(j+1)+i+1])));
+			wattie.pixels[larg*(j+1)+i+1].blue = round(b*(exp(-alpha*(double)hits[larg*(j+1)+i+1]))+b2*(1-exp(-alpha*(double)hits[larg*(j+1)+i+1])));
 			
 			}
 
-if(larg*(j+1)+i-1 < larg*anch && larg*(j+1)+i-1 >=0){
+		if(larg*(j+1)+i-1 < larg*anch && larg*(j+1)+i-1 >=0){
+
 	  		hits[larg*(j+1)+i-1]++; 
-			fruit.pixels[larg*(j+1)+i-1].red = round(r*(exp(-alpha*(double)hits[larg*(j+1)+i-1]))+r2*(1-exp(-alpha*(double)hits[larg*(j+1)+i-1])));
-			fruit.pixels[larg*(j+1)+i-1].green = round(g*(exp(-alpha*(double)hits[larg*(j+1)+i-1]))+g2*(1-exp(-alpha*(double)hits[larg*(j+1)+i-1])));
-			fruit.pixels[larg*(j+1)+i-1].blue = round(b*(exp(-alpha*(double)hits[larg*(j+1)+i-1]))+b2*(1-exp(-alpha*(double)hits[larg*(j+1)+i-1])));
+
+			wattie.pixels[larg*(j+1)+i-1].red = round(r*(exp(-alpha*(double)hits[larg*(j+1)+i-1]))+r2*(1-exp(-alpha*(double)hits[larg*(j+1)+i-1])));
+			wattie.pixels[larg*(j+1)+i-1].green = round(g*(exp(-alpha*(double)hits[larg*(j+1)+i-1]))+g2*(1-exp(-alpha*(double)hits[larg*(j+1)+i-1])));
+			wattie.pixels[larg*(j+1)+i-1].blue = round(b*(exp(-alpha*(double)hits[larg*(j+1)+i-1]))+b2*(1-exp(-alpha*(double)hits[larg*(j+1)+i-1])));
 			}
 
 
-if(larg*(j-1)+i+1 < larg*anch && larg*(j-1)+i+1 >=0){
+		if(larg*(j-1)+i+1 < larg*anch && larg*(j-1)+i+1 >=0){
+
 	  		hits[larg*(j-1)+i+1]++; 
-			fruit.pixels[larg*(j-1)+i+1].red = round(r*(exp(-alpha*(double)hits[larg*(j-1)+i+1]))+r2*(1-exp(-alpha*(double)hits[larg*(j-1)+i+1])));
-			fruit.pixels[larg*(j-1)+i+1].green = round(g*(exp(-alpha*(double)hits[larg*(j-1)+i+1]))+g2*(1-exp(-alpha*(double)hits[larg*(j-1)+i+1])));
-			fruit.pixels[larg*(j-1)+i+1].blue = round(b*(exp(-alpha*(double)hits[larg*(j-1)+i+1]))+b2*(1-exp(-alpha*(double)hits[larg*(j-1)+i+1])));
+
+			wattie.pixels[larg*(j-1)+i+1].red = round(r*(exp(-alpha*(double)hits[larg*(j-1)+i+1]))+r2*(1-exp(-alpha*(double)hits[larg*(j-1)+i+1])));
+			wattie.pixels[larg*(j-1)+i+1].green = round(g*(exp(-alpha*(double)hits[larg*(j-1)+i+1]))+g2*(1-exp(-alpha*(double)hits[larg*(j-1)+i+1])));
+			wattie.pixels[larg*(j-1)+i+1].blue = round(b*(exp(-alpha*(double)hits[larg*(j-1)+i+1]))+b2*(1-exp(-alpha*(double)hits[larg*(j-1)+i+1])));
 			}
 
-if(larg*(j-1)+i-1 < larg*anch && larg*(j-1)+i-1 >=0){
+		if(larg*(j-1)+i-1 < larg*anch && larg*(j-1)+i-1 >=0){
+
 	  		hits[larg*(j-1)+i-1]++; 
-			fruit.pixels[larg*(j-1)+i-1].red = round(r*(exp(-alpha*(double)hits[larg*(j-1)+i-1]))+r2*(1-exp(-alpha*(double)hits[larg*(j-1)+i-1])));
-			fruit.pixels[larg*(j-1)+i-1].green = round(g*(exp(-alpha*(double)hits[larg*(j-1)+i-1]))+g2*(1-exp(-alpha*(double)hits[larg*(j-1)+i-1])));
-			fruit.pixels[larg*(j-1)+i-1].blue = round(b*(exp(-alpha*(double)hits[larg*(j-1)+i-1]))+b2*(1-exp(-alpha*(double)hits[larg*(j-1)+i-1])));
+
+			wattie.pixels[larg*(j-1)+i-1].red = round(r*(exp(-alpha*(double)hits[larg*(j-1)+i-1]))+r2*(1-exp(-alpha*(double)hits[larg*(j-1)+i-1])));
+			wattie.pixels[larg*(j-1)+i-1].green = round(g*(exp(-alpha*(double)hits[larg*(j-1)+i-1]))+g2*(1-exp(-alpha*(double)hits[larg*(j-1)+i-1])));
+			wattie.pixels[larg*(j-1)+i-1].blue = round(b*(exp(-alpha*(double)hits[larg*(j-1)+i-1]))+b2*(1-exp(-alpha*(double)hits[larg*(j-1)+i-1])));
 			}
 
-			
-			////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-/*  
-
-if(larg*j+i+3 < larg*anch && larg*j+i+3 >=0){
-
-			hits[larg*j+i+3]++; 
-			fruit.pixels[larg*j+i+3].red = round(r*(exp(-alpha*(double)hits[larg*j+i+3]))+r2*(1-exp(-alpha*(double)hits[larg*j+i+3])));
-			fruit.pixels[larg*j+i+3].green = round(g*(exp(-alpha*(double)hits[larg*j+i+3]))+g2*(1-exp(-alpha*(double)hits[larg*j+i+3])));
-			fruit.pixels[larg*j+i+3].blue = round(b*(exp(-alpha*(double)hits[larg*j+i+3]))+b2*(1-exp(-alpha*(double)hits[larg*j+i+3])));
-} 
-
-if(larg*j+i-3 < larg*anch && larg*j+i-3 >=0){
-
-			hits[larg*j+i-3]++; 
-			fruit.pixels[larg*j+i-3].red = round(r*(exp(-alpha*(double)hits[larg*j+i-3]))+r2*(1-exp(-alpha*(double)hits[larg*j+i-3])));
-			fruit.pixels[larg*j+i-3].green = round(g*(exp(-alpha*(double)hits[larg*j+i-3]))+g2*(1-exp(-alpha*(double)hits[larg*j+i-3])));
-			fruit.pixels[larg*j+i-3].blue = round(b*(exp(-alpha*(double)hits[larg*j+i-3]))+b2*(1-exp(-alpha*(double)hits[larg*j+i-3])));
-} 
 
 
-if(larg*(j+3)+i < larg*anch && larg*(j+3)+i>=0){
-	  		hits[larg*(j+3)+i]++; 
-			fruit.pixels[larg*(j+3)+i].red = round(r*(exp(-alpha*(double)hits[larg*(j+3)+i]))+r2*(1-exp(-alpha*(double)hits[larg*(j+3)+i])));
-			fruit.pixels[larg*(j+3)+i].green = round(g*(exp(-alpha*(double)hits[larg*(j+3)+i]))+g2*(1-exp(-alpha*(double)hits[larg*(j+3)+i])));
-			fruit.pixels[larg*(j+3)+i].blue = round(b*(exp(-alpha*(double)hits[larg*(j+3)+i]))+b2*(1-exp(-alpha*(double)hits[larg*(j+3)+i])));
-}
+		if(larg*(j+2)+i+1 < larg*anch && larg*(j+2)+i+1>=0){
 
-
-if(larg*(j-3)+i < larg*anch && larg*(j-3)+i>=0){
-	  		hits[larg*(j-3)+i]++; 
-			fruit.pixels[larg*(j-3)+i].red = round(r*(exp(-alpha*(double)hits[larg*(j-3)+i]))+r2*(1-exp(-alpha*(double)hits[larg*(j-3)+i])));
-			fruit.pixels[larg*(j-3)+i].green = round(g*(exp(-alpha*(double)hits[larg*(j-3)+i]))+g2*(1-exp(-alpha*(double)hits[larg*(j-3)+i])));
-			fruit.pixels[larg*(j-3)+i].blue = round(b*(exp(-alpha*(double)hits[larg*(j-3)+i]))+b2*(1-exp(-alpha*(double)hits[larg*(j-3)+i])));
-}*/
-
-
-if(larg*(j+2)+i+1 < larg*anch && larg*(j+2)+i+1>=0){
 	  		hits[larg*(j+2)+i+1]++; 
-			fruit.pixels[larg*(j+2)+i+1].red = round(r*(exp(-alpha*(double)hits[larg*(j+2)+i+1]))+r2*(1-exp(-alpha*(double)hits[larg*(j+2)+i+1])));
-			fruit.pixels[larg*(j+2)+i+1].green = round(g*(exp(-alpha*(double)hits[larg*(j+2)+i+1]))+g2*(1-exp(-alpha*(double)hits[larg*(j+2)+i+1])));
-			fruit.pixels[larg*(j+2)+i+1].blue = round(b*(exp(-alpha*(double)hits[larg*(j+2)+i+1]))+b2*(1-exp(-alpha*(double)hits[larg*(j+2)+i+1])));
+
+			wattie.pixels[larg*(j+2)+i+1].red = round(r*(exp(-alpha*(double)hits[larg*(j+2)+i+1]))+r2*(1-exp(-alpha*(double)hits[larg*(j+2)+i+1])));
+			wattie.pixels[larg*(j+2)+i+1].green = round(g*(exp(-alpha*(double)hits[larg*(j+2)+i+1]))+g2*(1-exp(-alpha*(double)hits[larg*(j+2)+i+1])));
+			wattie.pixels[larg*(j+2)+i+1].blue = round(b*(exp(-alpha*(double)hits[larg*(j+2)+i+1]))+b2*(1-exp(-alpha*(double)hits[larg*(j+2)+i+1])));
 }
 
 
-if(larg*(j-2)+i+1 < larg*anch && larg*(j-2)+i+1>=0){
+		if(larg*(j-2)+i+1 < larg*anch && larg*(j-2)+i+1>=0){
+
 	  		hits[larg*(j-2)+i+1]++; 
-			fruit.pixels[larg*(j-2)+i+1].red = round(r*(exp(-alpha*(double)hits[larg*(j-2)+i+1]))+r2*(1-exp(-alpha*(double)hits[larg*(j-2)+i+1])));
-			fruit.pixels[larg*(j-2)+i+1].green = round(g*(exp(-alpha*(double)hits[larg*(j-2)+i+1]))+g2*(1-exp(-alpha*(double)hits[larg*(j-2)+i+1])));
-			fruit.pixels[larg*(j-2)+i+1].blue = round(b*(exp(-alpha*(double)hits[larg*(j-2)+i+1]))+b2*(1-exp(-alpha*(double)hits[larg*(j-2)+i+1])));
+
+			wattie.pixels[larg*(j-2)+i+1].red = round(r*(exp(-alpha*(double)hits[larg*(j-2)+i+1]))+r2*(1-exp(-alpha*(double)hits[larg*(j-2)+i+1])));
+			wattie.pixels[larg*(j-2)+i+1].green = round(g*(exp(-alpha*(double)hits[larg*(j-2)+i+1]))+g2*(1-exp(-alpha*(double)hits[larg*(j-2)+i+1])));
+			wattie.pixels[larg*(j-2)+i+1].blue = round(b*(exp(-alpha*(double)hits[larg*(j-2)+i+1]))+b2*(1-exp(-alpha*(double)hits[larg*(j-2)+i+1])));
 }
 
 
-if(larg*(j-2)+i-1 < larg*anch && larg*(j-2)+i-1>=0){
+		if(larg*(j-2)+i-1 < larg*anch && larg*(j-2)+i-1>=0){
+
 	  		hits[larg*(j-2)+i-1]++; 
-			fruit.pixels[larg*(j-2)+i-1].red = round(r*(exp(-alpha*(double)hits[larg*(j-2)+i-1]))+r2*(1-exp(-alpha*(double)hits[larg*(j-2)+i-1])));
-			fruit.pixels[larg*(j-2)+i-1].green = round(g*(exp(-alpha*(double)hits[larg*(j-2)+i-1]))+g2*(1-exp(-alpha*(double)hits[larg*(j-2)+i-1])));
-			fruit.pixels[larg*(j-2)+i-1].blue = round(b*(exp(-alpha*(double)hits[larg*(j-2)+i-1]))+b2*(1-exp(-alpha*(double)hits[larg*(j-2)+i-1])));
+
+			wattie.pixels[larg*(j-2)+i-1].red = round(r*(exp(-alpha*(double)hits[larg*(j-2)+i-1]))+r2*(1-exp(-alpha*(double)hits[larg*(j-2)+i-1])));
+			wattie.pixels[larg*(j-2)+i-1].green = round(g*(exp(-alpha*(double)hits[larg*(j-2)+i-1]))+g2*(1-exp(-alpha*(double)hits[larg*(j-2)+i-1])));
+			wattie.pixels[larg*(j-2)+i-1].blue = round(b*(exp(-alpha*(double)hits[larg*(j-2)+i-1]))+b2*(1-exp(-alpha*(double)hits[larg*(j-2)+i-1])));
 }
 
 
-if(larg*(j+2)+i-1 < larg*anch && larg*(j+2)+i-1>=0){
+		if(larg*(j+2)+i-1 < larg*anch && larg*(j+2)+i-1>=0){
+
 	  		hits[larg*(j+2)+i-1]++; 
-			fruit.pixels[larg*(j+2)+i-1].red = round(r*(exp(-alpha*(double)hits[larg*(j+2)+i-1]))+r2*(1-exp(-alpha*(double)hits[larg*(j+2)+i-1])));
-			fruit.pixels[larg*(j+2)+i-1].green = round(g*(exp(-alpha*(double)hits[larg*(j+2)+i-1]))+g2*(1-exp(-alpha*(double)hits[larg*(j+2)+i-1])));
-			fruit.pixels[larg*(j+2)+i-1].blue = round(b*(exp(-alpha*(double)hits[larg*(j+2)+i-1]))+b2*(1-exp(-alpha*(double)hits[larg*(j+2)+i-1])));
+
+			wattie.pixels[larg*(j+2)+i-1].red = round(r*(exp(-alpha*(double)hits[larg*(j+2)+i-1]))+r2*(1-exp(-alpha*(double)hits[larg*(j+2)+i-1])));
+			wattie.pixels[larg*(j+2)+i-1].green = round(g*(exp(-alpha*(double)hits[larg*(j+2)+i-1]))+g2*(1-exp(-alpha*(double)hits[larg*(j+2)+i-1])));
+			wattie.pixels[larg*(j+2)+i-1].blue = round(b*(exp(-alpha*(double)hits[larg*(j+2)+i-1]))+b2*(1-exp(-alpha*(double)hits[larg*(j+2)+i-1])));
 }
 
 
-if(larg*(j+1)+i+2 < larg*anch && larg*(j+1)+i+2>=0){
+		if(larg*(j+1)+i+2 < larg*anch && larg*(j+1)+i+2>=0){
+
 	  		hits[larg*(j+1)+i+2]++; 
-			fruit.pixels[larg*(j+1)+i+2].red = round(r*(exp(-alpha*(double)hits[larg*(j+1)+i+2]))+r2*(1-exp(-alpha*(double)hits[larg*(j+1)+i+2])));
-			fruit.pixels[larg*(j+1)+i+2].green = round(g*(exp(-alpha*(double)hits[larg*(j+1)+i+2]))+g2*(1-exp(-alpha*(double)hits[larg*(j+1)+i+2])));
-			fruit.pixels[larg*(j+1)+i+2].blue = round(b*(exp(-alpha*(double)hits[larg*(j+1)+i+2]))+b2*(1-exp(-alpha*(double)hits[larg*(j+1)+i+2])));
+
+			wattie.pixels[larg*(j+1)+i+2].red = round(r*(exp(-alpha*(double)hits[larg*(j+1)+i+2]))+r2*(1-exp(-alpha*(double)hits[larg*(j+1)+i+2])));
+			wattie.pixels[larg*(j+1)+i+2].green = round(g*(exp(-alpha*(double)hits[larg*(j+1)+i+2]))+g2*(1-exp(-alpha*(double)hits[larg*(j+1)+i+2])));
+			wattie.pixels[larg*(j+1)+i+2].blue = round(b*(exp(-alpha*(double)hits[larg*(j+1)+i+2]))+b2*(1-exp(-alpha*(double)hits[larg*(j+1)+i+2])));
 }
 
 
-if(larg*(j+1)+i-2 < larg*anch && larg*(j+1)+i-2>=0){
+		if(larg*(j+1)+i-2 < larg*anch && larg*(j+1)+i-2>=0){
+
 	  		hits[larg*(j+1)+i-2]++; 
-			fruit.pixels[larg*(j+1)+i-2].red = round(r*(exp(-alpha*(double)hits[larg*(j+1)+i-2]))+r2*(1-exp(-alpha*(double)hits[larg*(j+1)+i-2])));
-			fruit.pixels[larg*(j+1)+i-2].green = round(g*(exp(-alpha*(double)hits[larg*(j+1)+i-2]))+g2*(1-exp(-alpha*(double)hits[larg*(j+1)+i-2])));
-			fruit.pixels[larg*(j+1)+i-2].blue = round(b*(exp(-alpha*(double)hits[larg*(j+1)+i-2]))+b2*(1-exp(-alpha*(double)hits[larg*(j+1)+i-2])));
+
+			wattie.pixels[larg*(j+1)+i-2].red = round(r*(exp(-alpha*(double)hits[larg*(j+1)+i-2]))+r2*(1-exp(-alpha*(double)hits[larg*(j+1)+i-2])));
+			wattie.pixels[larg*(j+1)+i-2].green = round(g*(exp(-alpha*(double)hits[larg*(j+1)+i-2]))+g2*(1-exp(-alpha*(double)hits[larg*(j+1)+i-2])));
+			wattie.pixels[larg*(j+1)+i-2].blue = round(b*(exp(-alpha*(double)hits[larg*(j+1)+i-2]))+b2*(1-exp(-alpha*(double)hits[larg*(j+1)+i-2])));
 }
 
 
-if(larg*(j-1)+i-2 < larg*anch && larg*(j-1)+i-2>=0){
+		if(larg*(j-1)+i-2 < larg*anch && larg*(j-1)+i-2>=0){
+
 	  		hits[larg*(j-1)+i-2]++; 
-			fruit.pixels[larg*(j-1)+i-2].red = round(r*(exp(-alpha*(double)hits[larg*(j-1)+i-2]))+r2*(1-exp(-alpha*(double)hits[larg*(j-1)+i-2])));
-			fruit.pixels[larg*(j-1)+i-2].green = round(g*(exp(-alpha*(double)hits[larg*(j-1)+i-2]))+g2*(1-exp(-alpha*(double)hits[larg*(j-1)+i-2])));
-			fruit.pixels[larg*(j-1)+i-2].blue = round(b*(exp(-alpha*(double)hits[larg*(j-1)+i-2]))+b2*(1-exp(-alpha*(double)hits[larg*(j-1)+i-2])));
+
+			wattie.pixels[larg*(j-1)+i-2].red = round(r*(exp(-alpha*(double)hits[larg*(j-1)+i-2]))+r2*(1-exp(-alpha*(double)hits[larg*(j-1)+i-2])));
+			wattie.pixels[larg*(j-1)+i-2].green = round(g*(exp(-alpha*(double)hits[larg*(j-1)+i-2]))+g2*(1-exp(-alpha*(double)hits[larg*(j-1)+i-2])));
+			wattie.pixels[larg*(j-1)+i-2].blue = round(b*(exp(-alpha*(double)hits[larg*(j-1)+i-2]))+b2*(1-exp(-alpha*(double)hits[larg*(j-1)+i-2])));
 }
 
+      
+		if(larg*(j-1)+i+2 < larg*anch && larg*(j-1)+i+2>=0){
 
-if(larg*(j-1)+i+2 < larg*anch && larg*(j-1)+i+2>=0){
-	  		hits[larg*(j-1)+i+2]++; 
-			fruit.pixels[larg*(j-1)+i+2].red = round(r*(exp(-alpha*(double)hits[larg*(j-1)+i+2]))+r2*(1-exp(-alpha*(double)hits[larg*(j-1)+i+2])));
-			fruit.pixels[larg*(j-1)+i+2].green = round(g*(exp(-alpha*(double)hits[larg*(j-1)+i+2]))+g2*(1-exp(-alpha*(double)hits[larg*(j-1)+i+2])));
-			fruit.pixels[larg*(j-1)+i+2].blue = round(b*(exp(-alpha*(double)hits[larg*(j-1)+i+2]))+b2*(1-exp(-alpha*(double)hits[larg*(j-1)+i+2])));
+			hits[larg*(j-1)+i+2]++; 
+
+			wattie.pixels[larg*(j-1)+i+2].red = round(r*(exp(-alpha*(double)hits[larg*(j-1)+i+2]))+r2*(1-exp(-alpha*(double)hits[larg*(j-1)+i+2])));
+			wattie.pixels[larg*(j-1)+i+2].green = round(g*(exp(-alpha*(double)hits[larg*(j-1)+i+2]))+g2*(1-exp(-alpha*(double)hits[larg*(j-1)+i+2])));
+			wattie.pixels[larg*(j-1)+i+2].blue = round(b*(exp(-alpha*(double)hits[larg*(j-1)+i+2]))+b2*(1-exp(-alpha*(double)hits[larg*(j-1)+i+2])));
 }
+} /* Termina caso 3 */
 
-
-}
-
-
-
-
-
-
-
-/*  
-			for (k =1; k<radio; k++){  
-			for(k2 = 0; k2<=k; k2++){
-
-			if(k!=radio-1 || k2!=radio-1){
-
-			if(larg*(j+k)+(i+k2) < larg*anch){
-
-			hits[larg*(j+k)+(i+k2)]++;			
-			fruit.pixels[larg*(j+k)+(i+k2)].red = round(r*(exp(-alpha*(double)hits[larg*(j+k)+(i+k2)]))+r2*(1-exp(-alpha*(double)hits[larg*(j+k)+(i+k2)])));
-			fruit.pixels[larg*(j+k)+(i+k2)].green = round(g*(exp(-alpha*(double)hits[larg*(j+k)+(i+k2)]))+g2*(1-exp(-alpha*(double)hits[larg*(j+k)+(i+k2)])));
-			fruit.pixels[larg*(j+k)+(i+k2)].blue = round(b*(exp(-alpha*(double)hits[larg*(j+k)+(i+k2)]))+b2*(1-exp(-alpha*(double)hits[larg*(j+k)+(i+k2)])));
-			}
-
-    	  		if(larg*(j+k2)+(i+k) < larg*anch){
-			hits[larg*(j+k2)+(i+k)]++;			
-			fruit.pixels[larg*(j+k2)+(i+k)].red = round(r*(exp(-alpha*(double)hits[larg*(j+k2)+(i+k)]))+r2*(1-exp(-alpha*(double)hits[larg*(j+k2)+(i+k)])));
-			fruit.pixels[larg*(j+k2)+(i+k)].green = round(g*(exp(-alpha*(double)hits[larg*(j+k2)+(i+k)]))+g2*(1-exp(-alpha*(double)hits[larg*(j+k2)+(i+k)])));
-			fruit.pixels[larg*(j+k2)+(i+k)].blue = round(b*(exp(-alpha*(double)hits[larg*(j+k2)+(i+k)]))+b2*(1-exp(-alpha*(double)hits[larg*(j+k2)+(i+k)])));
-			} 
-
-  			if((larg*(j-k)+(i-k2) < larg*anch)&&(larg*(j-k)+(i-k2) >= 0)){
-			hits[larg*(j-k)+(i-k2)]++;			
-			fruit.pixels[larg*(j-k)+(i-k2)].red = round(r*(exp(-alpha*(double)hits[larg*(j-k)+(i-k2)]))+r2*(1-exp(-alpha*(double)hits[larg*(j-k)+(i-k2)])));
-			fruit.pixels[larg*(j-k)+(i-k2)].green = round(g*(exp(-alpha*(double)hits[larg*(j-k)+(i-k2)]))+g2*(1-exp(-alpha*(double)hits[larg*(j-k)+(i-k2)])));
-			fruit.pixels[larg*(j-k)+(i-k2)].blue = round(b*(exp(-alpha*(double)hits[larg*(j-k)+i-k2]))+b2*(1-exp(-alpha*(double)hits[larg*(j-k)+(i-k2)])));
-			}
-  
-	  		if((larg*(j-k2)+(i-k) < larg*anch)&&(larg*(j-k2)+(i-k) >= 0)){
-			hits[larg*(j-k2)+(i-k)]++;			
-			fruit.pixels[larg*(j-k2)+(i-k)].red = round(r*(exp(-alpha*(double)hits[larg*(j-k2)+(i-k)]))+r2*(1-exp(-alpha*(double)hits[larg*(j-k2)+(i-k)])));
-			fruit.pixels[larg*(j-k2)+(i-k)].green = round(g*(exp(-alpha*(double)hits[larg*(j-k2)+(i-k)]))+g2*(1-exp(-alpha*(double)hits[larg*(j-k2)+(i-k)])));
-			fruit.pixels[larg*(j-k2)+(i-k)].blue = round(b*(exp(-alpha*(double)hits[larg*(j-k2)+(i-k)]))+b2*(1-exp(-alpha*(double)hits[larg*(j-k2)+(i-k)])));
-			}  
-
- 	  		if((larg*(j+k)+(i-k2) < larg*anch)&&(larg*(j+k)+(i-k2) >= 0)){
-			hits[larg*(j+k)+(i-k2)]++;
-			fruit.pixels[larg*(j+k)+(i-k2)].red = round(r*(exp(-alpha*(double)hits[larg*(j+k)+(i-k2)]))+r2*(1-exp(-alpha*(double)hits[larg*(j+k)+(i-k2)])));
-			fruit.pixels[larg*(j+k)+(i-k2)].green = round(g*(exp(-alpha*(double)hits[larg*(j+k)+(i-k2)]))+g2*(1-exp(-alpha*(double)hits[larg*(j+k)+(i-k2)])));
-			fruit.pixels[larg*(j+k)+(i-k2)].blue = round(b*(exp(-alpha*(double)hits[larg*(j+k)+(i-k2)]))+b2*(1-exp(-alpha*(double)hits[larg*(j+k)+(i-k2)])));
-			} 
-  
-			if((larg*(j-k2)+(i+k) < larg*anch)&&(larg*(j-k2)+(i+k) >= 0)){
-			hits[larg*(j-k2)+(i+k)]++;			
-			fruit.pixels[larg*(j-k2)+(i+k)].red = round(r*(exp(-alpha*(double)hits[larg*(j-k2)+(i+k)]))+r2*(1-exp(-alpha*(double)hits[larg*(j-k2)+(i+k)])));
-			fruit.pixels[larg*(j-k2)+(i+k)].green = round(g*(exp(-alpha*(double)hits[larg*(j-k2)+(i+k)]))+g2*(1-exp(-alpha*(double)hits[larg*(j-k2)+(i+k)])));
-			fruit.pixels[larg*(j-k2)+(i+k)].blue = round(b*(exp(-alpha*(double)hits[larg*(j-k2)+(i+k)]))+b2*(1-exp(-alpha*(double)hits[larg*(j-k2)+(i+k)])));
-			}
-  
-	  		if((larg*(j-k)+(i+k2) < larg*anch)&&(larg*(j-k)+(i+k2) >= 0)){
-			hits[larg*(j-k)+(i+k2)]++;			
-			fruit.pixels[larg*(j-k)+(i+k2)].red = round(r*(exp(-alpha*(double)hits[larg*(j-k)+(i+k2)]))+r2*(1-exp(-alpha*(double)hits[larg*(j-k)+(i+k2)])));
-			fruit.pixels[larg*(j-k)+(i+k2)].green = round(g*(exp(-alpha*(double)hits[larg*(j-k)+(i+k2)]))+g2*(1-exp(-alpha*(double)hits[larg*(j-k)+(i+k2)])));
-			fruit.pixels[larg*(j-k)+(i+k2)].blue = round(b*(exp(-alpha*(double)hits[larg*(j-k)+(i+k2)]))+b2*(1-exp(-alpha*(double)hits[larg*(j-k)+(i+k2)])));
-			} 
-
-  			if((larg*(j+k2)+(i-k) < larg*anch)&&(larg*(j+k2)+(i-k) >= 0)){
-			hits[larg*(j+k2)+(i-k)]++;			
-			fruit.pixels[larg*(j+k2)+(i-k)].red = round(r*(exp(-alpha*(double)hits[larg*(j+k2)+(i-k)]))+r2*(1-exp(-alpha*(double)hits[larg*(j+k2)+(i-k)])));
-			fruit.pixels[larg*(j+k2)+(i-k)].green = round(g*(exp(-alpha*(double)hits[larg*(j+k2)+(i-k)]))+g2*(1-exp(-alpha*(double)hits[larg*(j+k2)+(i-k)])));
-			fruit.pixels[larg*(j+k2)+(i-k)].blue = round(b*(exp(-alpha*(double)hits[larg*(j+k2)+(i-k)]))+b2*(1-exp(-alpha*(double)hits[larg*(j+k2)+(i-k)])));
-			}  
-			}
-		}
-		}	*/	
 		  break;
 		  }  /* Termina switch */
 	      }  /* Termina for (p = PQntuples (res) - 1; p >= 0; p--) */
 
 	  tra = atoi (trans);
 
-	  save_png_to_file (&fruit, tra);
-	  free (fruit.pixels);
+	  save_png_to_file (&wattie, tra);
 	  /* Termina la función dibuja */
-	  PQclear (res);
+	  free (wattie.pixels);
+	  free (hits);
 	}
+//  free (quer);
     }
+	  PQclear (res);
   PQfinish (conn);
   /* Termina Postgres */
   return 0;
@@ -854,20 +791,59 @@ my_png_flush (png_structp png_ptr)
 {
 }
 
+char *
+str_replace ( char *string, char *substr, char *replacement ){
+char *tok = NULL;
+char *newstr = NULL;
+char *oldstr = NULL;
+char *head = NULL;
+				       
+/*  if either substr or replacement is NULL, duplicate string a let caller handle it */
+       if ( substr == NULL || replacement == NULL ) return strdup (string);
+  newstr = strdup (string);
+  head = newstr;
+  while ( (tok = strstr ( head, substr ))){
+ oldstr = newstr;
+ newstr = malloc ( strlen ( oldstr ) - strlen ( substr ) + strlen ( replacement ) + 1 );
+ /* failed to alloc mem, free old string and return NULL */
+  if ( newstr == NULL ){
+  free (oldstr);
+  return NULL;
+    }
+   memcpy ( newstr, oldstr, tok - oldstr );
+  memcpy ( newstr + (tok - oldstr), replacement, strlen ( replacement ) );
+  memcpy ( newstr + (tok - oldstr) + strlen( replacement ), tok + strlen ( substr ), strlen ( oldstr ) - strlen ( substr ) - ( tok - oldstr ) );
+  memset ( newstr + strlen ( oldstr ) - strlen ( substr ) + strlen ( replacement ) , 0, 1 );
+  /*  move back head right after the last replacement */
+  head = newstr + (tok - oldstr) + strlen( replacement );
+  free (oldstr);
+   }
+   return newstr;
+ } 
+
+
+
+
+
+
+
+/*  
+
+
 char * str_replace ( char *string, char *substr, char *replacement ){
   char *tok = NULL;
   char *newstr = NULL;
   char *oldstr = NULL;
   char *head = NULL;
  
-  /* if either substr or replacement is NULL, duplicate string a let caller handle it */
   if ( substr == NULL || replacement == NULL ) return strdup (string);
   newstr = strdup (string);
   head = newstr;
+//	head = strdup (string);
   while ( (tok = strstr ( head, substr ))){
+ //   oldstr = strdup (string);
     oldstr = newstr;
     newstr = malloc ( strlen ( oldstr ) - strlen ( substr ) + strlen ( replacement ) + 1 );
-    /*failed to alloc mem, free old string and return NULL */
     if ( newstr == NULL ){
       free (oldstr);
       return NULL;
@@ -876,9 +852,11 @@ char * str_replace ( char *string, char *substr, char *replacement ){
     memcpy ( newstr + (tok - oldstr), replacement, strlen ( replacement ) );
     memcpy ( newstr + (tok - oldstr) + strlen( replacement ), tok + strlen ( substr ), strlen ( oldstr ) - strlen ( substr ) - ( tok - oldstr ) );
     memset ( newstr + strlen ( oldstr ) - strlen ( substr ) + strlen ( replacement ) , 0, 1 );
-    /* move back head right after the last replacement */
     head = newstr + (tok - oldstr) + strlen( replacement );
     free (oldstr);
+   // free (newstr);
+  //  free (head);
   }
+ // free (head);
   return newstr;
-}
+}*/
